@@ -1,173 +1,159 @@
-# WexCorporatePayments API
+ï»¿# WexCorporatePayments API
 
-API para gerenciar transações de compra corporativa em USD e converter para moedas estrangeiras usando o U.S. Treasury Fiscal Data API.
+API for managing corporate purchase transactions in USD and converting them to foreign currencies using the U.S. Treasury Fiscal Data API.
 
-## ?? Descrição
+## ğŸ“‹ Description
 
-Esta solução implementa uma API REST ASP.NET Core (.NET 8 LTS) que permite:
+This solution implements an ASP.NET Core REST API (.NET 8 LTS) that allows:
 
-- Criar transações de compra em USD
-- Converter transações para moedas estrangeiras usando taxas de câmbio do Treasury API
-- Persistir dados em banco SQLite local
-- Aplicar regras de negócio para validação de taxas (janela de 6 meses)
-- Arredondar valores monetários para 2 casas decimais com `MidpointRounding.ToEven`
+- Create purchase transactions in USD
+- Convert transactions to foreign currencies using exchange rates from the Treasury API
+- Persist data in a local SQLite database
+- Apply business rules for rate validation (6-month window)
+- Round monetary values to 2 decimal places using MidpointRounding.ToEven
 
-## ??? Arquitetura
+## ğŸ—ï¸ Architecture
 
-A solução segue os princípios de **Clean Architecture** com separação em camadas:
+The solution follows **Clean Architecture** principles with layer separation:
 
-```
-WexCorporatePayments/
-??? WexCorporatePayments.Domain/          # Entidades, regras de negócio, exceções
-??? WexCorporatePayments.Application/     # Casos de uso (Handlers), DTOs, portas
-??? WexCorporatePayments.Infrastructure/  # EF Core, SQLite, integração com Treasury API
-??? WexCorporatePayments.Api/             # Controllers, Program.cs, configurações
-??? WexCorporatePayments.Tests/           # Testes unitários e de integração
-```
+```n WexCorporatePayments/
+â”œâ”€â”€ WexCorporatePayments.Domain/          # Entities, business rules, exceptions
+â”œâ”€â”€ WexCorporatePayments.Application/     # Use cases (Handlers), DTOs, ports
+â”œâ”€â”€ WexCorporatePayments.Infrastructure/  # EF Core, SQLite, Treasury API integration
+â”œâ”€â”€ WexCorporatePayments.Api/             # Controllers, Program.cs, configurations
+â””â”€â”€ WexCorporatePayments.Tests/           # Unit and integration tests
+```n
+### Layer Dependencies
 
-### Dependências entre Camadas
+- **Domain**: No external dependencies
+- **Application**: References only **Domain**
+- **Infrastructure**: References **Domain** and **Application**
+- **Api**: References **Application** and **Infrastructure** (does not reference Domain directly)
+- **Tests**: References **Domain**, **Application**, and **Api**
 
-- **Domain**: Não possui dependências externas
-- **Application**: Referencia apenas **Domain**
-- **Infrastructure**: Referencia **Domain** e **Application**
-- **Api**: Referencia **Application** e **Infrastructure** (não referencia Domain diretamente)
-- **Tests**: Referencia **Domain**, **Application** e **Api**
+## ğŸš€ Getting Started
 
-## ?? Começando
-
-### Pré-requisitos
+### Prerequisites
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- Editor de código (Visual Studio, VS Code, Rider, etc.)
+- Code editor (Visual Studio, VS Code, Rider, etc.)
 
-### Instalação e Execução
+### Installation and Execution
 
-1. **Clone ou extraia o projeto**
+1. **Clone or extract the project**
 
 ```bash
 cd WexCorporatePayments
-```
-
-2. **Restaure as dependências**
+```n
+2. **Restore dependencies**
 
 ```bash
 dotnet restore
-```
-
-3. **Compile a solução**
+```n
+3. **Build the solution**
 
 ```bash
 dotnet build
 ```
 
-4. **Crie a migração inicial do banco de dados**
+4. **Create the initial database migration**
 
 ```bash
 dotnet ef migrations add InitialCreate -p WexCorporatePayments.Infrastructure -s WexCorporatePayments.Api
-```
-
-5. **Aplique as migrations ao banco de dados**
+```n
+5. **Apply migrations to the database**
 
 ```bash
 dotnet ef database update -p WexCorporatePayments.Infrastructure -s WexCorporatePayments.Api
-```
+```n
+> **Note**: Migrations are automatically applied on application startup, but you can run them manually if preferred.
 
-> **Nota**: As migrations são aplicadas automaticamente no startup da aplicação, mas você pode executar manualmente se preferir.
-
-6. **Execute a API**
+6. **Run the API**
 
 ```bash
 dotnet run --project WexCorporatePayments.Api
-```
+```n
+The API will be available at:
+- HTTPS: https://localhost:7XXX (port is dynamically assigned)
+- HTTP: http://localhost:5XXX
 
-A API estará disponível em:
-- HTTPS: `https://localhost:7XXX` (a porta é atribuída dinamicamente)
-- HTTP: `http://localhost:5XXX`
+7. **Access Swagger UI**
 
-7. **Acesse o Swagger UI**
+Open your browser and navigate to: https://localhost:7XXX/swagger
 
-Abra o navegador e acesse: `https://localhost:7XXX/swagger`
-
-## ?? Executando os Testes
+## ğŸ§ª Running Tests
 
 ```bash
 dotnet test
-```
-
-Para visualizar a cobertura de testes:
+```n
+To view test coverage:
 
 ```bash
 dotnet test --collect:"XPlat Code Coverage"
-```
+```n
+## ğŸ“¡ API Endpoints
 
-## ?? Endpoints da API
+### 1. Create Purchase Transaction
 
-### 1. Criar Transação de Compra
+**POST** /api/transactions
 
-**POST** `/api/transactions`
-
-Cria uma nova transação de compra em USD.
+Creates a new purchase transaction in USD.
 
 **Request Body:**
 ```json
 {
-  "description": "Laptop Dell",
+  "description": "Dell Laptop",
   "transactionDate": "2025-08-15",
   "amountUsd": 1234.56
 }
 ```
 
-**Validações:**
-- `description`: obrigatória, máximo 50 caracteres
-- `transactionDate`: obrigatória, data válida
-- `amountUsd`: obrigatório, maior que zero
+**Validations:**
+- description: required, maximum 50 characters
+- transactionDate: required, valid date
+- amountUsd: required, greater than zero
 
 **Responses:**
-- `201 Created`: Transação criada com sucesso
+- 201 Created: Transaction created successfully
   ```json
   {
     "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
   }
-  ```
-- `400 Bad Request`: Dados inválidos (validação de DataAnnotations)
-- `422 Unprocessable Entity`: Erro de validação de domínio
+  ```n- 400 Bad Request: Invalid data (DataAnnotations validation)
+- 422 Unprocessable Entity: Domain validation error
 
-**Exemplo com cURL:**
+**Example with cURL:**
 ```bash
 curl -X POST "https://localhost:7XXX/api/transactions" \
   -H "Content-Type: application/json" \
-  -d '{
-    "description": "Laptop Dell",
-    "transactionDate": "2025-08-15",
-    "amountUsd": 1234.56
-  }'
+  -d '{"description": "Dell Laptop", "transactionDate": "2025-08-15", "amountUsd": 1234.56}'
 ```
 
-### 2. Converter Transação para Moeda Estrangeira
+### 2. Convert Transaction to Foreign Currency
 
-**GET** `/api/transactions/{id}/convert?country={country}&currency={currency}`
+**GET** /api/transactions/{id}/convert?country={country}&currency={currency}
 
-Converte uma transação existente para uma moeda estrangeira usando taxas do Treasury API.
+Converts an existing transaction to a foreign currency using Treasury API rates.
 
 **Path Parameters:**
-- `id` (Guid): Id da transação
+- id (Guid): Transaction ID
 
 **Query Parameters:**
-- `country` (string): Nome do país (ex: "Brazil")
-- `currency` (string): Nome da moeda (ex: "Real")
+- country (string): Country name (e.g., "Brazil")
+- currency (string): Currency name (e.g., "Real")
 
-**Regras de Negócio:**
-- A taxa de câmbio deve ter `record_date` ? `transactionDate`
-- A taxa de câmbio deve ter `record_date` ? `transactionDate - 6 meses`
-- Se não houver taxa válida, retorna erro 422
-- O valor convertido é arredondado para 2 casas decimais com `MidpointRounding.ToEven`
+**Business Rules:**
+- Exchange rate must have record_date â‰¤ transactionDate
+- Exchange rate must have record_date â‰¥ transactionDate - 6 months
+- If no valid rate exists, returns 422 error
+- Converted amount is rounded to 2 decimal places using MidpointRounding.ToEven
 
 **Responses:**
-- `200 OK`: Conversão realizada com sucesso
+- 200 OK: Conversion successful
   ```json
   {
     "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "description": "Laptop Dell",
+    "description": "Dell Laptop",
     "transactionDate": "2025-08-15",
     "amountUsd": 1234.56,
     "exchangeRate": 5.10,
@@ -176,18 +162,17 @@ Converte uma transação existente para uma moeda estrangeira usando taxas do Trea
     "currency": "Real",
     "recordDate": "2025-08-15"
   }
-  ```
-- `404 Not Found`: Transação não encontrada
-- `422 Unprocessable Entity`: Taxa de câmbio não disponível para o período
+  ```n- 404 Not Found: Transaction not found
+- 422 Unprocessable Entity: Exchange rate not available for the period
 
-**Exemplo com cURL:**
+**Example with cURL:**
 ```bash
 curl -X GET "https://localhost:7XXX/api/transactions/3fa85f64-5717-4562-b3fc-2c963f66afa6/convert?country=Brazil&currency=Real"
 ```
 
-## ?? Configurações
+## âš™ï¸ Configuration
 
-As configurações da aplicação estão no arquivo `appsettings.json`:
+Application settings are in the appsettings.json file:
 
 ```json
 {
@@ -198,59 +183,52 @@ As configurações da aplicação estão no arquivo `appsettings.json`:
     "BaseUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/"
   }
 }
-```
-
+```n
 ### Connection String
-- Por padrão, usa SQLite com arquivo `wex.db` na raiz do projeto
-- O banco é criado automaticamente no primeiro startup
+- By default, uses SQLite with wex.db file in the project root
+- Database is automatically created on first startup
 
 ### Treasury API
-- URL base do U.S. Treasury Fiscal Data API
-- Endpoint usado: `v1/accounting/od/rates_of_exchange`
+- Base URL for U.S. Treasury Fiscal Data API
+- Endpoint used: v1/accounting/od/rates_of_exchange
 
-## ?? Pacotes NuGet Utilizados
+## ğŸ“¦ NuGet Packages Used
 
 ### WexCorporatePayments.Infrastructure
-- `Microsoft.EntityFrameworkCore.Sqlite` (8.0.0)
-- `Microsoft.EntityFrameworkCore.Design` (8.0.0)
+- Microsoft.EntityFrameworkCore.Sqlite (8.0.0)
+- Microsoft.EntityFrameworkCore.Design (8.0.0)
 
 ### WexCorporatePayments.Tests
-- `xunit` (incluso no template)
-- `FluentAssertions` (8.8.0)
-- `Moq` (4.20.72)
-- `Microsoft.AspNetCore.Mvc.Testing` (8.0.0)
-- `Microsoft.EntityFrameworkCore.InMemory` (8.0.0)
+- xunit (included in template)
+- FluentAssertions (8.8.0)
+- Moq (4.20.72)
+- Microsoft.AspNetCore.Mvc.Testing (8.0.0)
+- Microsoft.EntityFrameworkCore.InMemory (8.0.0)
 
-## ?? Exemplos Práticos
+## ğŸ’¡ Practical Examples
 
-### Fluxo Completo
+### Complete Flow
 
-1. **Criar uma transação:**
+1. **Create a transaction:**
 
 ```bash
 curl -X POST "https://localhost:7001/api/transactions" \
   -H "Content-Type: application/json" \
-  -d '{
-    "description": "MacBook Pro",
-    "transactionDate": "2025-10-01",
-    "amountUsd": 2499.99
-  }'
-```
-
-Resposta:
+  -d '{"description": "MacBook Pro", "transactionDate": "2025-10-01", "amountUsd": 2499.99}'
+```n
+Response:
 ```json
 {
   "id": "abc12345-6789-4def-gh12-ijklmnopqrst"
 }
-```
-
-2. **Converter para Real (BRL):**
+```n
+2. **Convert to Brazilian Real (BRL):**
 
 ```bash
 curl -X GET "https://localhost:7001/api/transactions/abc12345-6789-4def-gh12-ijklmnopqrst/convert?country=Brazil&currency=Real"
 ```
 
-Resposta:
+Response:
 ```json
 {
   "id": "abc12345-6789-4def-gh12-ijklmnopqrst",
@@ -265,127 +243,124 @@ Resposta:
 }
 ```
 
-### Exemplos de Países e Moedas (Treasury API)
+### Country and Currency Examples (Treasury API)
 
-| País | Moeda | Exemplo de Query |
-|------|-------|------------------|
-| Brazil | Real | `country=Brazil&currency=Real` |
-| Canada | Dollar | `country=Canada&currency=Dollar` |
-| Mexico | Peso | `country=Mexico&currency=Peso` |
-| United Kingdom | Pound | `country=United Kingdom&currency=Pound` |
-| Japan | Yen | `country=Japan&currency=Yen` |
-| Euro Zone | Euro | `country=Euro Zone&currency=Euro` |
+| Country | Currency | Query Example |
+|---------|----------|---------------|
+| Brazil | Real | country=Brazil&currency=Real |
+| Canada | Dollar | country=Canada&currency=Dollar |
+| Mexico | Peso | country=Mexico&currency=Peso |
+| United Kingdom | Pound | country=United Kingdom&currency=Pound |
+| Japan | Yen | country=Japan&currency=Yen |
+| Euro Zone | Euro | country=Euro Zone&currency=Euro |
 
-> **Nota**: Os nomes de países e moedas devem corresponder exatamente aos valores retornados pela Treasury API.
+> **Note**: Country and currency names must exactly match the values returned by the Treasury API.
 
-## ??? Desenvolvimento
+## ğŸ› ï¸ Development
 
-### Estrutura de Pastas
+### Folder Structure
 
-```
-WexCorporatePayments.Domain/
-??? Entities/
-?   ??? PurchaseTransaction.cs
-??? Exceptions/
-?   ??? DomainValidationException.cs
-??? Repositories/
-    ??? IPurchaseTransactionRepository.cs
+```n WexCorporatePayments.Domain/
+â”œâ”€â”€ Entities/
+â”‚   â””â”€â”€ PurchaseTransaction.cs
+â”œâ”€â”€ Exceptions/
+â”‚   â””â”€â”€ DomainValidationException.cs
+â””â”€â”€ Repositories/
+    â””â”€â”€ IPurchaseTransactionRepository.cs
 
 WexCorporatePayments.Application/
-??? DTOs/
-?   ??? CreatePurchaseTransactionRequest.cs
-?   ??? ConvertedPurchaseResponse.cs
-??? Handlers/
-?   ??? CreatePurchaseTransactionHandler.cs
-?   ??? ConvertPurchaseHandler.cs
-??? Services/
-?   ??? IExchangeRateService.cs
-??? DependencyInjection.cs
+â”œâ”€â”€ DTOs/
+â”‚   â”œâ”€â”€ CreatePurchaseTransactionRequest.cs
+â”‚   â””â”€â”€ ConvertedPurchaseResponse.cs
+â”œâ”€â”€ Handlers/
+â”‚   â”œâ”€â”€ CreatePurchaseTransactionHandler.cs
+â”‚   â””â”€â”€ ConvertPurchaseHandler.cs
+â”œâ”€â”€ Services/
+â”‚   â””â”€â”€ IExchangeRateService.cs
+â””â”€â”€ DependencyInjection.cs
 
 WexCorporatePayments.Infrastructure/
-??? Persistence/
-?   ??? AppDbContext.cs
-?   ??? PurchaseTransactionRepository.cs
-??? ExternalServices/
-?   ??? ExchangeRateService.cs
-??? DependencyInjection.cs
+â”œâ”€â”€ Persistence/
+â”‚   â”œâ”€â”€ AppDbContext.cs
+â”‚   â””â”€â”€ PurchaseTransactionRepository.cs
+â”œâ”€â”€ ExternalServices/
+â”‚   â””â”€â”€ ExchangeRateService.cs
+â””â”€â”€ DependencyInjection.cs
 
 WexCorporatePayments.Api/
-??? Controllers/
-?   ??? TransactionsController.cs
-??? Program.cs
-??? appsettings.json
+â”œâ”€â”€ Controllers/
+â”‚   â””â”€â”€ TransactionsController.cs
+â”œâ”€â”€ Program.cs
+â””â”€â”€ appsettings.json
 
 WexCorporatePayments.Tests/
-??? Domain/
-?   ??? PurchaseTransactionTests.cs
-??? Application/
-?   ??? CreatePurchaseTransactionHandlerTests.cs
-?   ??? ConvertPurchaseHandlerTests.cs
-??? Integration/
-    ??? TransactionsControllerTests.cs
+â”œâ”€â”€ Domain/
+â”‚   â””â”€â”€ PurchaseTransactionTests.cs
+â”œâ”€â”€ Application/
+â”‚   â”œâ”€â”€ CreatePurchaseTransactionHandlerTests.cs
+â”‚   â””â”€â”€ ConvertPurchaseHandlerTests.cs
+â””â”€â”€ Integration/
+    â””â”€â”€ TransactionsControllerTests.cs
 ```
 
-### Adicionando uma Nova Migration
+### Adding a New Migration
 
 ```bash
-dotnet ef migrations add NomeDaMigration -p WexCorporatePayments.Infrastructure -s WexCorporatePayments.Api
+dotnet ef migrations add MigrationName -p WexCorporatePayments.Infrastructure -s WexCorporatePayments.Api
 dotnet ef database update -p WexCorporatePayments.Infrastructure -s WexCorporatePayments.Api
-```
-
-### Removendo a Última Migration
+```n
+### Removing the Last Migration
 
 ```bash
 dotnet ef migrations remove -p WexCorporatePayments.Infrastructure -s WexCorporatePayments.Api
 ```
 
-## ?? Cobertura de Testes
+## ğŸ“Š Test Coverage
 
-A solução inclui:
+The solution includes:
 
-- **Testes Unitários de Domínio**: Validações de entidades e regras de negócio
-- **Testes Unitários de Application**: Handlers e lógica de aplicação
-- **Testes de Integração**: Endpoints da API com banco em memória
+- **Domain Unit Tests**: Entity validations and business rules
+- **Application Unit Tests**: Handlers and application logic
+- **Integration Tests**: API endpoints with in-memory database
 
-### Principais Cenários Testados
+### Main Test Scenarios
 
-? Criação de transação com dados válidos  
-? Validação de descrição (máx 50 caracteres)  
-? Validação de valor positivo  
-? Arredondamento para 2 casas decimais (ToEven)  
-? Conversão de moeda com sucesso  
-? Erro quando taxa não está disponível  
-? Erro quando taxa está fora da janela de 6 meses  
-? Endpoints retornam status codes corretos (201, 404, 422)  
+âœ… Transaction creation with valid data
+âœ… Description validation (max 50 characters)
+âœ… Positive amount validation
+âœ… Rounding to 2 decimal places (ToEven)
+âœ… Successful currency conversion
+âœ… Error when rate is not available
+âœ… Error when rate is outside the 6-month window
+âœ… Endpoints return correct status codes (201, 404, 422)
 
-## ?? Logs
+## ğŸ“ Logs
 
-A aplicação registra logs estruturados usando `ILogger`:
+The application logs structured information using ILogger:
 
-- **Information**: Operações bem-sucedidas (criação, conversão)
-- **Warning**: Validações falhas, taxas não encontradas
-- **Error**: Erros inesperados, falhas de rede
+- **Information**: Successful operations (creation, conversion)
+- **Warning**: Failed validations, rates not found
+- **Error**: Unexpected errors, network failures
 
-Exemplo de log:
+Example log:
+```n info: WexCorporatePayments.Api.Controllers.TransactionsController[0]
+      Transaction created successfully. Id: abc12345-6789-4def-gh12-ijklmnopqrst
 ```
-info: WexCorporatePayments.Api.Controllers.TransactionsController[0]
-      Transação criada com sucesso. Id: abc12345-6789-4def-gh12-ijklmnopqrst
-```
 
-## ?? Tratamento de Erros
+## ğŸš¨ Error Handling
 
-A API retorna respostas padronizadas usando `ProblemDetails`:
+The API returns standardized responses using ProblemDetails:
 
 ```json
 {
   "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-  "title": "Erro de validação",
+  "title": "Validation error",
   "status": 422,
-  "detail": "Não foi possível encontrar uma taxa de câmbio válida para Brazil/Real..."
+  "detail": "Could not find a valid exchange rate for Brazil/Real..."
 }
 ```
 
-## ?? Recursos Adicionais
+## ğŸ“š Additional Resources
 
 - [U.S. Treasury Fiscal Data API Documentation](https://fiscaldata.treasury.gov/api-documentation/)
 - [ASP.NET Core Documentation](https://docs.microsoft.com/aspnet/core)
@@ -393,10 +368,10 @@ A API retorna respostas padronizadas usando `ProblemDetails`:
 - [xUnit Documentation](https://xunit.net/)
 - [FluentAssertions Documentation](https://fluentassertions.com/)
 
-## ?? Autor
+## ğŸ‘¨â€ğŸ’» Author
 
-Desenvolvido como parte do desafio técnico WexCorporatePayments.
+Developed as part of the WexCorporatePayments technical challenge.
 
-## ?? Licença
+## ğŸ“„ License
 
-Este projeto é privado e destinado apenas para fins de avaliação técnica.
+This project is private and intended for technical evaluation purposes only.
